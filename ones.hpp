@@ -39,6 +39,21 @@ namespace ones {
     };
     typedef eosio::multi_index< "liquidity"_n, liquidity_row > liquidity;
 
+    struct [[eosio::table("config")]] st_defi_config
+    {
+        uint64_t swap_time;
+        uint64_t swap_quantity;
+        uint64_t swap_suply;
+        uint64_t swap_counter;
+        uint64_t swap_issue;
+        vector<uint64_t> market_suply;
+        uint64_t market_time;
+        uint64_t last_swap_suply;
+        vector<uint64_t> market_quantity;
+        uint64_t market_issue;
+    };
+    typedef singleton<"config"_n, st_defi_config> tb_defi_config;
+
     /**
      * ## STATIC `get_fee`
      *
@@ -57,7 +72,7 @@ namespace ones {
      */
     static uint8_t get_fee()
     {
-        return 20;
+        return 30;
     }
 
     /**
@@ -95,5 +110,62 @@ namespace ones {
         return sort == pool.token1.symbol ?
             pair<asset, asset>{ pool.quantity1, pool.quantity2 } :
             pair<asset, asset>{ pool.quantity2, pool.quantity1 };
+    }
+
+    /**
+     * ## STATIC `get_rewards`
+     *
+     * Get rewards for trading
+     *
+     * ### params
+     *
+     * - `{uint64_t} pair_id` - pair id
+     * - `{asset} from` - tokens we are trading from
+     * - `{asset} to` - tokens we are trading to
+     *
+     * ### returns
+     *
+     * - {asset} = rewards in ONES
+     *
+     * ### example
+     *
+     * ```c++
+     * const uint64_t pair_id = 1;
+     * const asset from = asset{10000, {"EOS", 4}};
+     * const asset to = asset{12345, {"USDT", 4}};
+     *
+     * const auto rewards = ones::get_rewards( pair_id, from, to);
+     * // rewards => "0.123456 ONES"
+     * ```
+     */
+    static asset get_rewards( const uint64_t pair_id, asset from, asset to )
+    {
+        asset res {0, symbol{"ONES",4}};
+        auto eos = from.symbol.code().to_string() == "EOS" ? from : to;
+        if(eos.symbol.code().to_string() != "EOS")
+            return res;     //return 0 if non-EOS pair
+
+        //see: https://github.com/onesgame/defi/blob/master/onesgamemine/onesgamemine.cpp#L212
+        ones::tb_defi_config _config( "onesgamemine"_n, "onesgamemine"_n.value );
+        auto config = _config.get();
+
+        ones::liquidity _pools( "onesgamedefi"_n, "onesgamedefi"_n.value );
+        auto poolit = _pools.find(pair_id);
+        if(poolit==_pools.end()) return res;
+
+        auto pool_weight = poolit->swap_weight;
+        auto pool_balance = config.swap_quantity;
+        auto pool_last_issue = config.swap_time;
+
+        float newsecs = current_time_point().sec_since_epoch() - pool_last_issue;  //second since last update
+        auto times = eos.amount / 10000;
+        auto total = pool_balance + pool_weight * 0.02 * newsecs * 10000;
+        while(times--){
+            auto mined = total/10000;   //0.01% of the pool balance
+            total -= mined;
+            res.amount += mined;
+        }
+
+        return res;
     }
 }
