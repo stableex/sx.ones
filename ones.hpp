@@ -104,8 +104,9 @@ namespace ones {
     {
         // table
         ones::liquidity _pools( "onesgamedefi"_n, "onesgamedefi"_n.value );
-        auto pool = _pools.get(pair_id, "OnesLibrary: INVALID_PAIR_ID");
-        eosio::check( pool.token1.symbol == sort || pool.token2.symbol == sort, "Pair symbols don't match" );
+        auto pool = _pools.get(pair_id, "OnesLibrary: INVALID_PAIR_ID ");
+        //eosio::check( pool.token1.symbol == sort || pool.token2.symbol == sort, "DefiboxLibrary: sort symbol "+sort.code().to_string()+" does not match reserves: "+pool.token1.symbol.code().to_string()+","+pool.token2.symbol.code().to_string());
+        eosio::check( pool.token1.symbol == sort || pool.token2.symbol == sort, "DefiboxLibrary: sort symbol doesn't match");
 
         return sort == pool.token1.symbol ?
             pair<asset, asset>{ pool.quantity1, pool.quantity2 } :
@@ -141,8 +142,8 @@ namespace ones {
     static asset get_rewards( const uint64_t pair_id, asset from, asset to )
     {
         asset res {0, symbol{"ONES",4}};
-        auto eos = from.symbol.code() == symbol{"EOS"} ? from : to;
-        if(eos.symbol.code() != symbol{"EOS"})
+        auto eos = from.symbol == symbol{"EOS",4} ? from : to;
+        if(eos.symbol != symbol{"EOS",4})
             return res;     //return 0 if non-EOS pair
 
         //see: https://github.com/onesgame/defi/blob/master/onesgamemine/onesgamemine.cpp#L212
