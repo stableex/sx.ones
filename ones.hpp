@@ -139,11 +139,11 @@ namespace ones {
      * // rewards => "0.123456 ONES"
      * ```
      */
-    static asset get_rewards( const uint64_t pair_id, asset from, asset to )
+    static asset get_rewards( const uint64_t pair_id, asset in, asset out )
     {
         asset res {0, symbol{"ONES",4}};
-        auto eos = from.symbol == symbol{"EOS",4} ? from : to;
-        if(eos.symbol != symbol{"EOS",4})
+        if(in.symbol != symbol{"EOS",4}) std::swap(in, out);
+        if(in.symbol != symbol{"EOS",4})
             return res;     //return 0 if non-EOS pair
 
         //see: https://github.com/onesgame/defi/blob/master/onesgamemine/onesgamemine.cpp#L212
@@ -159,7 +159,7 @@ namespace ones {
         auto pool_last_issue = config.swap_time;
 
         float newsecs = current_time_point().sec_since_epoch() - pool_last_issue;  //second since last update
-        auto times = eos.amount / 10000;
+        auto times = in.amount / 10000;
         auto total = pool_balance + pool_weight * 0.02 * newsecs * 10000;
         while(times--){
             auto mined = total/10000;   //0.01% of the pool balance
