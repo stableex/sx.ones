@@ -12,6 +12,9 @@ namespace ones {
 
     using std::pair;
 
+    const name id = "ones"_n;
+    const name code = "onesgamedefi"_n;
+    const string description = "ONES Game Converter";
 
     struct token_t {
         name    address;
