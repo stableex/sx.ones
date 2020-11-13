@@ -149,21 +149,17 @@ namespace ones {
         if(in.symbol != symbol{"EOS",4})
             return res;     //return 0 if non-EOS pair
 
+        ones::liquidity _pools( "onesgamedefi"_n, "onesgamedefi"_n.value );
+        auto poolit = _pools.find(pair_id);
+        if(poolit==_pools.end() || poolit->swap_weight==0) return res;
+
         //see: https://github.com/onesgame/defi/blob/master/onesgamemine/onesgamemine.cpp#L212
         ones::tb_defi_config _config( "onesgamemine"_n, "onesgamemine"_n.value );
         auto config = _config.get();
 
-        ones::liquidity _pools( "onesgamedefi"_n, "onesgamedefi"_n.value );
-        auto poolit = _pools.find(pair_id);
-        if(poolit==_pools.end()) return res;
-
-        auto pool_weight = poolit->swap_weight;
-        auto pool_balance = config.swap_quantity;
-        auto pool_last_issue = config.swap_time;
-
-        float newsecs = current_time_point().sec_since_epoch() - pool_last_issue;  //second since last update
+        float newsecs = current_time_point().sec_since_epoch() - config.swap_time;  //second since last update
         auto times = in.amount / 10000;
-        auto total = pool_balance + pool_weight * 0.02 * newsecs * 10000;
+        auto total = config.swap_quantity + poolit->swap_weight * 0.02 * newsecs * 10000;
         while(times--){
             auto mined = total/10000;   //0.01% of the pool balance
             total -= mined;
