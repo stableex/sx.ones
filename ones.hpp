@@ -158,7 +158,7 @@ namespace ones {
         auto config = _config.get();
 
         float newsecs = current_time_point().sec_since_epoch() - config.swap_time;  //second since last update
-        auto times = poolit->swap_weight * 100 * in.amount / 10000 / 100;
+        uint64_t times = poolit->swap_weight * in.amount / 10000;
         auto total = config.swap_quantity + poolit->swap_weight * 0.02 * newsecs * 10000;
         while(times--){
             auto mined = total/10000;   //0.01% of the pool balance
