@@ -11,10 +11,11 @@ namespace ones {
     using eosio::multi_index;
 
     using std::pair;
+    using std::vector;
 
     const name id = "ones"_n;
     const name code = "onesgamedefi"_n;
-    const string description = "ONES Game Converter";
+    const std::string description = "ONES Game Converter";
 
     struct token_t {
         name    address;
@@ -55,7 +56,7 @@ namespace ones {
         vector<uint64_t> market_quantity;
         uint64_t market_issue;
     };
-    typedef singleton<"config"_n, st_defi_config> tb_defi_config;
+    typedef eosio::singleton<"config"_n, st_defi_config> tb_defi_config;
 
     /**
      * ## STATIC `get_fee`
@@ -108,8 +109,7 @@ namespace ones {
         // table
         ones::liquidity _pools( "onesgamedefi"_n, "onesgamedefi"_n.value );
         auto pool = _pools.get(pair_id, "OnesLibrary: INVALID_PAIR_ID ");
-        //eosio::check( pool.token1.symbol == sort || pool.token2.symbol == sort, "DefiboxLibrary: sort symbol "+sort.code().to_string()+" does not match reserves: "+pool.token1.symbol.code().to_string()+","+pool.token2.symbol.code().to_string());
-        eosio::check( pool.token1.symbol == sort || pool.token2.symbol == sort, "DefiboxLibrary: sort symbol doesn't match");
+        eosio::check( pool.token1.symbol == sort || pool.token2.symbol == sort, "OnesLibrary: sort symbol doesn't match");
 
         return sort == pool.token1.symbol ?
             pair<asset, asset>{ pool.quantity1, pool.quantity2 } :
@@ -157,7 +157,7 @@ namespace ones {
         ones::tb_defi_config _config( "onesgamemine"_n, "onesgamemine"_n.value );
         auto config = _config.get();
 
-        float newsecs = current_time_point().sec_since_epoch() - config.swap_time;  //second since last update
+        float newsecs = eosio::current_time_point().sec_since_epoch() - config.swap_time;  //second since last update
         uint64_t times = poolit->swap_weight * in.amount / 10000;
         auto total = config.swap_quantity + poolit->swap_weight * 0.02 * newsecs * 10000;
         while(times--){
